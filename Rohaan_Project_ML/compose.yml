@@ -1,0 +1,49 @@
+name: myapi
+
+services:
+  api_dev1:
+    build:
+      context: ./Back_end
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - postgres_db
+    ports:
+      - "8000:8000"  # FastAPI running on port 8000
+    networks:
+      - my-api-net
+
+  api_dev2:
+    build:
+      context: ./Front_end
+      dockerfile: Dockerfile.dev
+    depends_on:
+      - api_dev1  # Ensure Streamlit waits for FastAPI to be ready
+    ports:
+      - "8501:8501"  # Streamlit default port
+    networks:
+      - my-api-net
+    environment:
+      - API_URL=http://api_dev1:8000  # Environment variable to access FastAPI
+
+  postgres_db:
+    image: postgres:latest
+    restart: always
+    container_name: postgresql
+    environment:
+      - POSTGRES_USER=Faizan
+      - POSTGRES_PASSWORD=my_password
+      - POSTGRES_DB=mydatabase
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_db:/var/lib/postgresql/data
+    networks:
+      - my-api-net
+
+volumes:
+  postgres_db:
+    driver: local
+
+networks:
+  my-api-net:
+    driver: bridge
